@@ -45,8 +45,25 @@ data class Zoo(
         val listListEnumN: List<List<Attitude?>>,
         val listIntData: List<IntData>,
         val listIntDataN: List<IntData?>,
-        val tree: Tree
+        val tree: Tree,
+        val mapStringInt: Map<String,Int>,
+        val mapIntStringN: Map<Int,String?>,
+        val arrays: ZooWithArrays
 )
+
+@KSerializable data class ZooWithArrays(
+        val arrByte: Array<Byte>,
+        val arrInt: Array<Int>,
+        val arrIntN: Array<Int?>,
+        val arrIntData: Array<IntData>
+
+) {
+    override fun equals(o: Any?) = o is ZooWithArrays &&
+            arrByte.contentEquals(o.arrByte) &&
+            arrInt.contentEquals(o.arrInt) &&
+            arrIntN.contentEquals(o.arrIntN) &&
+            arrIntData.contentEquals(o.arrIntData)
+}
 
 val zoo = Zoo(
         Unit, true, 10, 20, 30, 40, 50f, 60.0, 'A', "Str0", Attitude.POSITIVE, IntData(70),
@@ -58,5 +75,13 @@ val zoo = Zoo(
         listOf(listOf(Attitude.NEGATIVE, null)),
         listOf(IntData(1), IntData(2), IntData(3)),
         listOf(IntData(1), null, IntData(3)),
-        Tree("root", Tree("left"), Tree("right", Tree("right.left"), Tree("right.right")))
+        Tree("root", Tree("left"), Tree("right", Tree("right.left"), Tree("right.right"))),
+        mapOf("one" to 1, "two" to 2, "three" to 3),
+        mapOf(0 to null, 1 to "first", 2 to "second"),
+        ZooWithArrays(
+                arrayOf(1, 2, 3),
+                arrayOf(100, 200, 300),
+                arrayOf(null, -1, -2),
+                arrayOf(IntData(1), IntData(2))
+        )
 )

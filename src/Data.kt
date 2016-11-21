@@ -1,4 +1,5 @@
 import kotlin.reflect.KFunction
+import kotlin.reflect.companionObjectInstance
 import kotlin.serialization.KSerializable
 import kotlin.serialization.KSerializer
 
@@ -41,20 +42,22 @@ data class Result(
         val ext: Any  // serialized (external) representation
 )
 
-data class Case<T: Any>(
-        val serializer: KSerializer<T>,
+class Case<T: Any>(
         val obj: T,
         val name: String = obj.javaClass.simpleName
-)
+) {
+    @Suppress("UNCHECKED_CAST")
+    val serializer: KSerializer<T> = obj::class.companionObjectInstance as KSerializer<T>
+}
 
 val testCases: List<Case<*>> = listOf(
-        Case(CityData, CityData(1, "New York")),
-        Case(StreetData, StreetData(2, "Broadway", CityData(1, "New York"))),
-        Case(StreetData2, StreetData2(2, "Broadway", CityData(1, "New York"))),
-        Case(StreetData2, StreetData2(2, "Broadway", null)),
-        Case(CountyData, CountyData("US", listOf(CityData(1, "New York"), CityData(2, "Chicago")))),
-        Case(Zoo, zoo),
-        Case(Shop, shop)
+        Case(CityData(1, "New York")),
+        Case(StreetData(2, "Broadway", CityData(1, "New York"))),
+        Case(StreetData2(2, "Broadway", CityData(1, "New York"))),
+        Case(StreetData2(2, "Broadway", null)),
+        Case(CountyData("US", listOf(CityData(1, "New York"), CityData(2, "Chicago")))),
+        Case(zoo),
+        Case(shop)
 )
 
 @Suppress("UNCHECKED_CAST")

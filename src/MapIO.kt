@@ -2,7 +2,7 @@ import kotlin.serialization.KSerializer
 import kotlin.serialization.NamedValueInput
 import kotlin.serialization.NamedValueOutput
 
-class MapOutput(val map: MutableMap<String, Any>) : NamedValueOutput() {
+class MapOutput(val map: MutableMap<String, Any> = mutableMapOf()) : NamedValueOutput() {
     override fun writeNamed(name: String, value: Any) {
         map[name] = value
     }
@@ -16,7 +16,7 @@ class MapInput(val map: Map<String, Any>) : NamedValueInput() {
 
 fun testMapIO(serializer: KSerializer<Any>, obj: Any): Result {
     // save
-    val out = MapOutput(mutableMapOf())
+    val out = MapOutput()
     out.write(serializer, obj)
     // load
     val inp = MapInput(out.map)

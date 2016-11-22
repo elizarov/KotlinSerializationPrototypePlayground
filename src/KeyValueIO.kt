@@ -2,19 +2,23 @@ import java.io.PrintWriter
 import java.io.StringReader
 import java.io.StringWriter
 import kotlin.reflect.KClass
-import kotlin.serialization.ElementValueInput
-import kotlin.serialization.ElementValueOutput
-import kotlin.serialization.KSerialClassDesc
-import kotlin.serialization.KSerializer
+import kotlin.serialization.*
 
 class KeyValueOutput(val out: PrintWriter) : ElementValueOutput() {
-    override fun writeBegin(desc: KSerialClassDesc) = out.print('{')
-    override fun writeEnd(desc: KSerialClassDesc) = out.print('}')
+    override fun writeBegin(desc: KSerialClassDesc, vararg typeParams: KSerializer<*>): KOutput {
+        out.print('{')
+        return this
+    }
 
-    override fun writeElement(desc: KSerialClassDesc, index: Int) {
+    override fun writeEnd(desc: KSerialClassDesc) {
+        out.print('}')
+    }
+
+    override fun writeElement(desc: KSerialClassDesc, index: Int): Boolean {
         if (index > 0) out.print(", ")
         out.print(desc.getElementName(index));
         out.print(':')
+        return true
     }
 
     override fun writeNullValue() = out.print("null")
@@ -30,8 +34,14 @@ class KeyValueOutput(val out: PrintWriter) : ElementValueOutput() {
 }
 
 class KeyValueInput(val inp: Parser) : ElementValueInput() {
-    override fun readBegin(desc: KSerialClassDesc) = inp.expectAfterWhiteSpace('{')
-    override fun readEnd(desc: KSerialClassDesc) = inp.expectAfterWhiteSpace('}')
+    override fun readBegin(desc: KSerialClassDesc, vararg typeParams: KSerializer<*>): KInput {
+        inp.expectAfterWhiteSpace('{')
+        return this
+    }
+
+    override fun readEnd(desc: KSerialClassDesc) {
+        inp.expectAfterWhiteSpace('}')
+    }
 
     override fun readElement(desc: KSerialClassDesc): Int {
         inp.skipWhitespace(',')

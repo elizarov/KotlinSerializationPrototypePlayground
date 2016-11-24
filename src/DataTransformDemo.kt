@@ -1,12 +1,12 @@
 import kotlin.serialization.ElementValueTransformer
 import kotlin.serialization.KSerialClassDesc
-import kotlin.serialization.KSerializable
+import kotlin.serialization.Serializable
 
 /**
  * @author Roman Elizarov
  */
 
-@KSerializable
+@Serializable
 data class Person(val firstName:String, val lastName:String)
 
 object LowercaseTransformer : ElementValueTransformer() {

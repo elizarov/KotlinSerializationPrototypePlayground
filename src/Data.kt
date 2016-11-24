@@ -1,37 +1,36 @@
 import kotlin.reflect.KFunction
 import kotlin.reflect.companionObjectInstance
-import kotlin.serialization.KSerializable
 import kotlin.serialization.KSerializer
+import kotlin.serialization.Serializable
 
 // -------------------------------------------
 // simple data objects
 
-@KSerializable
+@Serializable
 data class CityData(
         val id: Int,
         val name: String
 )
 
-@KSerializable
+@Serializable
 data class StreetData(
         val id: Int,
         val name: String,
         val city: CityData
 )
 
-@KSerializable
+@Serializable
 data class StreetData2(
         val id: Int,
         val name: String,
         val city: CityData?
 )
 
-@KSerializable
+@Serializable
 data class CountyData(
         val name: String,
         val cities: List<CityData>
 )
-
 
 // -------------------------------------------
 // testing framework

@@ -1,26 +1,26 @@
-import kotlin.serialization.KSerializable
+import kotlin.serialization.Serializable
 
 // Shop from Kotlin Koans
 
-@KSerializable
+@Serializable
 data class Shop(val name: String, val customers: List<Customer>)
 
-@KSerializable
+@Serializable
 data class Customer(val name: String, val city: City, val orders: List<Order>) {
     override fun toString() = "$name from ${city.name} with $orders"
 }
 
-@KSerializable
+@Serializable
 data class Order(val products: List<Product>, val isDelivered: Boolean) {
     override fun toString() = "$products${ if (isDelivered) " delivered" else "" }"
 }
 
-@KSerializable
+@Serializable
 data class Product(val name: String, val price: Double) {
     override fun toString() = "'$name' for $price"
 }
 
-@KSerializable
+@Serializable
 data class City(val name: String) {
     override fun toString() = name
 }

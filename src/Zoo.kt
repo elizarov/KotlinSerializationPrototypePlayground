@@ -1,4 +1,4 @@
-import kotlin.serialization.KSerializable
+import kotlin.serialization.Serializable
 
 /**
  * @author Roman Elizarov
@@ -6,13 +6,13 @@ import kotlin.serialization.KSerializable
 
 enum class Attitude { POSITIVE, NEUTRAL, NEGATIVE }
 
-@KSerializable
+@Serializable
 data class IntData(val intV: Int)
 
-@KSerializable
+@Serializable
 data class Tree(val name: String, val left: Tree? = null, val right: Tree? = null)
 
-@KSerializable
+@Serializable
 data class Zoo(
         val unit: Unit,
         val boolean: Boolean,
@@ -51,18 +51,18 @@ data class Zoo(
         val arrays: ZooWithArrays
 )
 
-@KSerializable data class ZooWithArrays(
+@Serializable data class ZooWithArrays(
         val arrByte: Array<Byte>,
         val arrInt: Array<Int>,
         val arrIntN: Array<Int?>,
         val arrIntData: Array<IntData>
 
 ) {
-    override fun equals(o: Any?) = o is ZooWithArrays &&
-            arrByte.contentEquals(o.arrByte) &&
-            arrInt.contentEquals(o.arrInt) &&
-            arrIntN.contentEquals(o.arrIntN) &&
-            arrIntData.contentEquals(o.arrIntData)
+    override fun equals(other: Any?) = other is ZooWithArrays &&
+            arrByte.contentEquals(other.arrByte) &&
+            arrInt.contentEquals(other.arrInt) &&
+            arrIntN.contentEquals(other.arrIntN) &&
+            arrIntData.contentEquals(other.arrIntData)
 }
 
 val zoo = Zoo(

@@ -10,78 +10,124 @@ import kotlin.serialization.*
  * @author Roman Elizarov
  */
 
-object JSON {
-    // todo: add 'replacer' param
-    fun <T> stringify(saver: KSerialSaver<T>, obj: T): String {
-        val sw = StringWriter()
-        val output = JsonOutput(Mode.OBJ, PrintWriter(sw))
-        output.write(saver, obj)
-        return sw.toString()
+class JSON {
+    companion object {
+        // todo: add 'replacer' param
+        fun <T> stringify(saver: KSerialSaver<T>, obj: T): String {
+            val sw = StringWriter()
+            val output = JsonOutput(Mode.OBJ, PrintWriter(sw))
+            output.write(saver, obj)
+            return sw.toString()
+        }
+
+        inline fun <reified T : Any> stringify(obj: T): String = stringify(T::class.serializer(), obj)
+
+        // todo: add 'reviver' param
+        fun <T> parse(str: String, loader: KSerialLoader<T>): T {
+            val parser = Parser(StringReader(str))
+            val input = JsonInput(Mode.OBJ, parser)
+            val result = input.read(loader)
+            check(parser.curCl == CL_EOF) { "Shall parse complete string"}
+            return result
+        }
+
+        inline fun <reified T : Any> parse(str: String): T = parse(str, T::class.serializer())
+
+        //================================= implementation =================================
+
+        private const val NULL = "null"
+
+        private const val COMMA = ','
+        private const val COLON = ':'
+        private const val BEGIN_OBJ = '{'
+        private const val END_OBJ = '}'
+        private const val BEGIN_LIST = '['
+        private const val END_LIST = ']'
+        private const val STRING = '"'
+        private const val STRING_ESC = '\\'
+
+        private const val INVALID = 0.toChar()
+
+        private const val CL_OTHER: Byte = 0
+        private const val CL_EOF: Byte = 1
+        private const val CL_INVALID: Byte = 2
+        private const val CL_WS: Byte = 3
+        private const val CL_COMMA: Byte = 4
+        private const val CL_COLON: Byte = 5
+        private const val CL_BEGIN_OBJ: Byte = 6
+        private const val CL_END_OBJ: Byte = 7
+        private const val CL_BEGIN_LIST: Byte = 8
+        private const val CL_END_LIST: Byte = 9
+        private const val CL_STRING: Byte = 10
+        private const val CL_STRING_ESC: Byte = 11
+
+        private const val CCL_MAX = 128
+        private const val CCL_OFS = 1
+
+        private val CCL = ByteArray(CCL_MAX + CCL_OFS)
+
+        fun initCCL(c : Int, cl: Byte) { CCL[c + CCL_OFS] = cl }
+        fun initCCL(c: Char, cl: Byte) { initCCL(c.toInt(), cl) }
+
+        fun ccl(c: Int): Byte = if (c < CCL_MAX + CCL_OFS) CCL[c + CCL_OFS] else CL_OTHER
+
+        init {
+            initCCL(-1, CL_EOF)
+            for (i in 0..0x20)
+                initCCL(i, CL_INVALID)
+            initCCL(0x09, CL_WS)
+            initCCL(0x0a, CL_WS)
+            initCCL(0x0d, CL_WS)
+            initCCL(0x20, CL_WS)
+            initCCL(COMMA, CL_COMMA)
+            initCCL(COLON, CL_COLON)
+            initCCL(BEGIN_OBJ, CL_BEGIN_OBJ)
+            initCCL(END_OBJ, CL_END_OBJ)
+            initCCL(BEGIN_LIST, CL_BEGIN_LIST)
+            initCCL(END_LIST, CL_END_LIST)
+            initCCL(STRING, CL_STRING)
+            initCCL(STRING_ESC, CL_STRING_ESC)
+        }
+
+        private val PRIMITIVE_CLASSES = setOf(
+                Boolean::class, Byte::class, Short::class, Int::class, Long::class,
+                Float::class, Double::class, Char::class, String::class
+        )
+
+        private fun switchMode(mode: Mode, desc: KSerialClassDesc, typeParams: Array<out KSerializer<*>>): Mode =
+                when (desc.kind) {
+                    KSerialClassKind.LIST, KSerialClassKind.SET -> Mode.LIST
+                    KSerialClassKind.MAP -> {
+                        val keyClass = typeParams[0].serializableClass
+                        if (PRIMITIVE_CLASSES.contains(keyClass) || keyClass.isSubclassOf(Enum::class))
+                            Mode.MAP else Mode.LIST
+                    }
+                    KSerialClassKind.ENTRY -> if (mode == Mode.MAP) Mode.ENTRY else Mode.OBJ
+                    else -> Mode.OBJ
+                }
     }
-
-    inline fun <reified T : Any> stringify(obj: T): String = stringify(T::class.serializer(), obj)
-
-    // todo: add 'reviver' param
-    fun <T> parse(str: String, loader: KSerialLoader<T>): T {
-        val parser = Parser(StringReader(str))
-        val input = JsonInput(Mode.OBJ, parser)
-        val result = input.read(loader)
-        check(parser.curToken is Token.EOF)
-        return result
-    }
-
-    inline fun <reified T : Any> parse(str: String): T = parse(str, T::class.serializer())
-
-    //================================= implementation =================================
-
-    private const val NULL = "null"
-
-    private const val COMMA = ','
-    private const val COLON = ':'
-    private const val BEGIN_OBJ = '{'
-    private const val END_OBJ = '}'
-    private const val BEGIN_LIST = '['
-    private const val END_LIST = ']'
-    private const val STRING_DELIM = '"'
-    private const val STRING_ESC = '\\'
-
-    private const val NONE = 0.toChar()
 
     private enum class Mode(val begin: Char, val end: Char) {
         OBJ(BEGIN_OBJ, END_OBJ),
         LIST(BEGIN_LIST, END_LIST),
         MAP(BEGIN_OBJ, END_OBJ),
-        ENTRY(NONE, NONE)
+        ENTRY(INVALID, INVALID);
+
+        val beginCl: Byte = ccl(begin.toInt())
+        val endCl: Byte = ccl(end.toInt())
     }
-
-    private val PRIMITIVE_CLASSES = setOf(
-            Boolean::class, Byte::class, Short::class, Int::class, Long::class,
-            Float::class, Double::class, Char::class, String::class
-    )
-
-    private fun switchMode(mode: Mode, desc: KSerialClassDesc, typeParams: Array<out KSerializer<*>>): Mode =
-            when (desc.kind) {
-                KSerialClassKind.LIST, KSerialClassKind.SET -> Mode.LIST
-                KSerialClassKind.MAP -> {
-                    val keyClass = typeParams[0].serializableClass
-                    if (PRIMITIVE_CLASSES.contains(keyClass) || keyClass.isSubclassOf(Enum::class))
-                        Mode.MAP else Mode.LIST
-                }
-                KSerialClassKind.ENTRY -> if (mode == Mode.MAP) Mode.ENTRY else Mode.OBJ
-                else -> Mode.OBJ
-            }
 
     private class JsonOutput(val mode: Mode, val w: PrintWriter) : ElementValueOutput() {
         private var forceStr: Boolean = false
 
         override fun writeBegin(desc: KSerialClassDesc, vararg typeParams: KSerializer<*>): KOutput {
             val newMode = switchMode(mode, desc, typeParams)
-            if (newMode.begin != NONE) w.print(newMode.begin)
+            if (newMode.begin != INVALID) w.print(newMode.begin)
             return if (mode == newMode) this else JsonOutput(newMode, w) // todo: reuse instance per mode
         }
 
         override fun writeEnd(desc: KSerialClassDesc) {
-            if (mode.end != NONE) w.print(mode.end)
+            if (mode.end != INVALID) w.print(mode.end)
         }
 
         override fun writeElement(desc: KSerialClassDesc, index: Int): Boolean {
@@ -134,33 +180,31 @@ object JSON {
         }
 
         override fun writeStringValue(value: String) {
-            w.print(STRING_DELIM)
+            w.print(STRING)
             for (c in value)
                 when (c) {
                     '\\' -> w.print("\\\\")
                     '"' -> w.print("\\\"")
                     else -> w.print(c)
                 }
-            w.print(STRING_DELIM)
+            w.print(STRING)
         }
 
         override fun writeValue(value: Any) {
             writeStringValue(value.toString())
         }
+
     }
 
     private class JsonInput(val mode: Mode, val p: Parser) : ElementValueInput() {
-        val curToken: Token get() = p.curToken
-        fun next(): Token = p.next()
-
         var curIndex = 0
         var entryIndex = 0
 
         override fun readBegin(desc: KSerialClassDesc, vararg typeParams: KSerializer<*>): KInput {
             val newMode = switchMode(mode, desc, typeParams)
-            if (newMode.begin != NONE) {
-                val token = next()
-                check(token is Token.Ch && token.c == newMode.begin)
+            if (newMode.begin != INVALID) {
+                check(p.curCl == newMode.beginCl)
+                p.nextToken()
             }
             return when (newMode) {
                 Mode.LIST, Mode.MAP -> JsonInput(newMode, p) // need fresh cur index
@@ -170,30 +214,27 @@ object JSON {
         }
 
         override fun readEnd(desc: KSerialClassDesc) {
-            if (mode.end != NONE) {
-                val token = next()
-                check(token is Token.Ch && token.c == mode.end)
+            if (mode.end != INVALID) {
+                check(p.curCl == mode.endCl)
+                p.nextToken()
             }
         }
 
         override fun readNotNullMark(): Boolean {
-            val token = curToken
-            if (token is Token.Lit && token.str == NULL) return false
+            if (p.curCl == CL_OTHER && p.curStr == NULL) return false
             return true
         }
 
         override fun readNullValue(): Nothing? {
-            val token = next()
-            check(token is Token.Lit && token.str == NULL) { "expected 'null'" }
+            check(p.nextToken() == NULL) { "expected 'null'" }
             return null
         }
 
         override fun readElement(desc: KSerialClassDesc): Int {
-            val commaToken = curToken
-            if (commaToken is Token.Ch && commaToken.c == COMMA) next()
+            if (p.curCl == CL_COMMA) p.nextToken()
             when (mode) {
                 Mode.LIST, Mode.MAP -> {
-                    if (!curToken.canBeginValue)
+                    if (!p.canBeginValue)
                         return READ_DONE
                     return ++curIndex
                 }
@@ -201,8 +242,8 @@ object JSON {
                     when (entryIndex++) {
                         0 -> return 0
                         1 -> {
-                            val token = next()
-                            check(token is Token.Ch && token.c == COLON)
+                            check(p.curCl == CL_COLON)
+                            p.nextToken()
                             return 1
                         }
                         else -> {
@@ -212,134 +253,125 @@ object JSON {
                     }
                 }
                 else -> {
-                    if (!curToken.canBeginValue)
+                    if (!p.canBeginValue)
                         return READ_DONE
-                    val keyToken = next()
-                    check(keyToken.hasStr)
-                    val colonToken = next()
-                    check(colonToken is Token.Ch && colonToken.c == COLON)
-                    return desc.getElementIndex(keyToken.str)
+                    val key = p.nextToken()!!
+                    check(p.curCl == CL_COLON)
+                    p.nextToken()
+                    return desc.getElementIndex(key)
                 }
             }
         }
 
-        override fun readBooleanValue(): Boolean = next().let { check(it.hasStr); it.str.toBoolean() }
-        override fun readByteValue(): Byte = next().let { check(it.hasStr); it.str.toByte() }
-        override fun readShortValue(): Short = next().let { check(it.hasStr); it.str.toShort() }
-        override fun readIntValue(): Int = next().let { check(it.hasStr); it.str.toInt() }
-        override fun readLongValue(): Long = next().let { check(it.hasStr); it.str.toLong() }
-        override fun readFloatValue(): Float = next().let { check(it.hasStr); it.str.toFloat() }
-        override fun readDoubleValue(): Double = next().let { check(it.hasStr); it.str.toDouble() }
-        override fun readCharValue(): Char = next().let { check(it.hasStr); it.str.single() }
-        override fun readStringValue(): String = next().let { check(it.hasStr); it.str }
+        override fun readBooleanValue(): Boolean = p.nextToken()!!.toBoolean()
+        override fun readByteValue(): Byte = p.nextToken()!!.toByte()
+        override fun readShortValue(): Short = p.nextToken()!!.toShort()
+        override fun readIntValue(): Int = p.nextToken()!!.toInt()
+        override fun readLongValue(): Long = p.nextToken()!!.toLong()
+        override fun readFloatValue(): Float = p.nextToken()!!.toFloat()
+        override fun readDoubleValue(): Double = p.nextToken()!!.toDouble()
+        override fun readCharValue(): Char = p.nextToken()!!.single()
+        override fun readStringValue(): String = p.nextToken()!!
 
-        override fun <T : Enum<T>> readEnumValue(enumClass: KClass<T>): T = next().let {
-            check(it.hasStr)
-            java.lang.Enum.valueOf(enumClass.java, it.str)
-        }
+        override fun <T : Enum<T>> readEnumValue(enumClass: KClass<T>): T =
+            java.lang.Enum.valueOf(enumClass.java, p.nextToken()!!)
     }
 
     private class Parser(val r: Reader) {
-        var nextChar: Int = -1
-        var curToken: Token = Token.EOF
+        // updated by nextChar
+        var curChar: Int = -1
+        // updated by nextToken
+        var curCl: Byte = CL_EOF
+        var curStr: String? = null
+        var sb = StringBuilder()
 
         init {
-            nextChar = r.read()
-            next()
+            nextChar()
+            nextToken()
         }
 
-        fun nextLiteral(): String {
-            val sb = StringBuilder()
-            parse@ while(true) {
-                sb.append(nextChar.toChar())
-                nextChar = r.read()
-                if (nextChar < 0) break@parse
-                when (nextChar.toChar()) {
-                    in 'a'..'z', in 'A'..'Z', in '0'..'9', '+', '-', '.' -> continue@parse
-                    else -> break@parse
+        val canBeginValue: Boolean get() = when (curCl) {
+            CL_BEGIN_LIST, CL_BEGIN_OBJ, CL_OTHER, CL_STRING -> true
+            else -> false
+        }
+
+        fun nextToken(): String? {
+            val prevStr = curStr
+            while(true) {
+                curCl = ccl(curChar)
+                when (curCl) {
+                    CL_WS -> nextChar() // skip whitespace
+                    CL_OTHER -> {
+                        nextLiteral()
+                        curStr = sb.toString()
+                        curCl = CL_OTHER
+                        return prevStr
+                    }
+                    CL_STRING -> {
+                        nextString()
+                        curStr = sb.toString()
+                        curCl = CL_STRING
+                        return prevStr
+                    }
+                    else -> {
+                        nextChar()
+                        curStr = null
+                        return prevStr
+                    }
                 }
             }
-            return sb.toString()
         }
 
-        fun nextString(): String {
-            val sb = StringBuilder()
-            parse@ while(true) {
-                nextChar = r.read()
-                if (nextChar < 0) break@parse
-                when (nextChar.toChar()) {
-                    STRING_DELIM -> {
-                        nextChar = r.read()
-                        break@parse
+        private fun nextChar() {
+            curChar = r.read()
+        }
+
+        private fun nextLiteral() {
+            sb.setLength(0)
+            while(true) {
+                sb.append(curChar.toChar())
+                nextChar()
+                if (ccl(curChar) != CL_OTHER) return
+            }
+        }
+
+        private fun nextString() {
+            sb.setLength(0)
+            while(true) {
+                nextChar()
+                when (ccl(curChar)) {
+                    CL_EOF -> return
+                    CL_STRING -> {
+                        nextChar()
+                        return
                     }
-                    STRING_ESC -> {
-                        nextChar = r.read()
-                        if (nextChar < 0) break@parse
-                        when (nextChar.toChar()) {
+                    CL_STRING_ESC -> {
+                        nextChar()
+                        if (curChar < 0) return
+                        when (curChar.toChar()) {
                             'b' -> sb.append(0x08.toChar())
                             'f' -> sb.append(0x0c.toChar())
                             'n' -> sb.append(0x0a.toChar())
                             't' -> sb.append(0x09.toChar())
-                        // todo: support 'u'
-                            else -> sb.append(nextChar.toChar())
-                        }
-                        continue@parse
-                    }
-                    else -> {
-                        sb.append(nextChar.toChar())
-                        continue@parse
-                    }
-                }
-            }
-            return sb.toString()
-        }
-
-        fun next(): Token {
-            val prevToken = curToken
-            parse@ while(true) {
-                when (nextChar) {
-                    -1 -> {
-                        curToken = Token.EOF
-                        return prevToken
-                    }
-                    0x20, 0x09, 0x0a, 0x0d -> {
-                        nextChar = r.read()
-                        continue@parse
-                    } // skip space
-                    else -> when (nextChar.toChar()) {
-                        COMMA, COLON, BEGIN_OBJ, END_OBJ, BEGIN_LIST, END_LIST -> {
-                            curToken = Token.Ch(nextChar.toChar())
-                            nextChar = r.read()
-                            return prevToken
-                        }
-                        in 'a'..'z', in 'A'..'Z', in '0'..'9', '+', '-', '.' -> {
-                            curToken = Token.Lit(nextLiteral())
-                            return prevToken
-                        }
-                        '"' -> {
-                            curToken = Token.Str(nextString())
-                            return prevToken
+                            'u' -> sb.append(((hex() shl 12) + (hex() shl 8) + (hex() shl 4) + hex()).toChar())
+                            else -> sb.append(curChar.toChar())
                         }
                     }
+                    else -> sb.append(curChar.toChar())
                 }
             }
         }
-    }
 
-    private sealed class Token(val hasStr: Boolean, val str: String) {
-        object EOF : Token(false, "")
-        class Ch(val c: Char) : Token(false, "") // character
-        class Lit(str: String) : Token(true, str) // literal
-        class Str(str: String) : Token(true, str) // string
-    }
-
-    private val Token.canBeginValue: Boolean get() = when (this) {
-        is Token.EOF -> false
-        is Token.Ch -> when (c) {
-            BEGIN_LIST, BEGIN_OBJ -> true
-            else -> false
+        private fun hex(): Int {
+            if (curChar < 0) return 0
+            nextChar()
+            if (curChar < 0) return 0
+            when (curChar.toChar()) {
+                in '0'..'9' -> return curChar - '0'.toInt()
+                in 'a'..'f' -> return curChar - 'a'.toInt() + 10
+                in 'A'..'F' -> return curChar - 'A'.toInt() + 10
+                else -> return 0
+            }
         }
-        is Token.Lit -> true
-        is Token.Str -> true
     }
 }

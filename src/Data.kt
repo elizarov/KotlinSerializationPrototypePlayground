@@ -60,28 +60,40 @@ val testCases: List<Case<*>> = listOf(
 )
 
 @Suppress("UNCHECKED_CAST")
-fun <T: Any> testCase(serializer: KSerializer<T>, obj: T, method: (KSerializer<Any>, Any) -> Result) {
+fun <T: Any> testCase(serializer: KSerializer<T>, obj: T, method: (KSerializer<Any>, Any) -> Result): Boolean {
     println("Start with $obj")
     val result = try { method(serializer as KSerializer<Any>, obj) } catch (e: Throwable) {
         println("Failed with $e")
-        return
+        return false
     }
     println("Loaded obj ${result.res}")
     println("    equals=${obj == result.res}, sameRef=${obj === result.res}")
     println("Saved form ${result.ext}")
+    return obj == result.res
 }
 
-fun testCase(case: Case<Any>, method: (KSerializer<Any>, Any) -> Result) {
+fun testCase(case: Case<Any>, method: (KSerializer<Any>, Any) -> Result): Boolean {
     println("Test case ${case.name}")
-    testCase(case.serializer, case.obj, method)
+    return testCase(case.serializer, case.obj, method)
 }
 
 @Suppress("UNCHECKED_CAST")
 fun testMethod(method: (KSerializer<Any>, Any) -> Result) {
-    println("=== Running with ${(method as KFunction<*>).name} ===")
+    println("==============================================")
+    println("Running with ${(method as KFunction<*>).name}")
+    var totalCount = 0
+    var failCount = 0
     testCases.forEach { case ->
         println()
-        testCase(case as Case<Any>, method)
-   }
+        if (!testCase(case as Case<Any>, method))
+            failCount++
+        totalCount++
+    }
+    println("==============================================")
+    println("Done with ${(method as KFunction<*>).name}")
+    if (failCount > 0)
+        println("!!! FAILED $failCount TEST CASES OUT OF $totalCount TEST CASES !!!")
+    else
+        println("Passed $totalCount test cases")
 }
 

@@ -22,7 +22,7 @@ data class JSON(
 
     inline fun <reified T : Any> stringify(obj: T): String = stringify(T::class.serializer(), obj)
 
-    fun <T> parse(str: String, loader: KSerialLoader<T>): T {
+    fun <T> parse(loader: KSerialLoader<T>, str: String): T {
         val parser = Parser(StringReader(str))
         val input = JsonInput(Mode.OBJ, parser)
         val result = input.read(loader)
@@ -30,13 +30,13 @@ data class JSON(
         return result
     }
 
-    inline fun <reified T : Any> parse(str: String): T = parse(str, T::class.serializer())
+    inline fun <reified T : Any> parse(str: String): T = parse(T::class.serializer(), str)
 
     companion object {
         fun <T> stringify(saver: KSerialSaver<T>, obj: T): String = plain.stringify(saver, obj)
         inline fun <reified T : Any> stringify(obj: T): String = stringify(T::class.serializer(), obj)
-        fun <T> parse(str: String, loader: KSerialLoader<T>): T = plain.parse(str, loader)
-        inline fun <reified T : Any> parse(str: String): T = parse(str, T::class.serializer())
+        fun <T> parse(loader: KSerialLoader<T>, str: String): T = plain.parse(loader, str)
+        inline fun <reified T : Any> parse(str: String): T = parse(T::class.serializer(), str)
 
         val plain = JSON()
         val unquoted = JSON(unquoted = true)

@@ -6,19 +6,19 @@ import kotlin.serialization.KSerializer
 
 fun testJsonIO(serializer: KSerializer<Any>, obj: Any): Result {
     val str = JSON.stringify(serializer, obj)
-    val other = JSON.parse(str, serializer)
+    val other = JSON.parse(serializer, str)
     return Result(obj, other, "${str.length} chars $str")
 }
 
 fun testJsonUnquotedIO(serializer: KSerializer<Any>, obj: Any): Result {
     val str = JSON.unquoted.stringify(serializer, obj)
-    val other = JSON.parse(str, serializer)
+    val other = JSON.parse(serializer, str)
     return Result(obj, other, "${str.length} chars $str")
 }
 
 fun testJsonIndentedIO(serializer: KSerializer<Any>, obj: Any): Result {
     val str = JSON.indented.stringify(serializer, obj)
-    val other = JSON.parse(str, serializer)
+    val other = JSON.parse(serializer, str)
     return Result(obj, other, "${str.length} chars $str")
 }
 

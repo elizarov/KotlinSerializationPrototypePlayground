@@ -7,6 +7,10 @@ class MapNullableOutput(val map: MutableMap<String, Any?>) : NamedValueOutput() 
         map.remove(name)
     }
 
+    override fun writeNamedNotNullMark(name: String) {
+        map.put(name, "") // use empty string as non-null mark for nullable sub-objects
+    }
+
     override fun writeNamed(name: String, value: Any) {
         map[name] = value
     }
@@ -41,4 +45,5 @@ fun main(args: Array<String>) {
 //    testCase(CountyData, CountyData("US", listOf(CityData(1, "New York"), CityData(2, "Chicago"))), ::testMapNullableIO)
 //    testCase(Zoo, zoo, ::testMapNullableIO)
     testMethod(::testMapNullableIO)
+
 }

@@ -6,7 +6,9 @@
         <option name="compilerInfo">
           <KotlinCompilerInfo>
             <option name="compilerSettings">
-              <CompilerSettings />
+              <CompilerSettings>
+                <option name="additionalArguments" value="-version -Xplugin lib/kotlin-serialization-compiler.jar" />
+              </CompilerSettings>
             </option>
             <option name="k2jsCompilerArguments">
               <K2JSCompilerArguments>

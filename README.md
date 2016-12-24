@@ -2,7 +2,20 @@
 
 Demo project for all the features implemented in the Kotlin serialization prototype.
 
-The compiled compiler plugin for kotlin build-1.1-M04 is available in the `lib` subdirectory.
+## Serialization plugin
+
+You need to obtain compiler plugin to work with Kotlin serialization prototype. 
+
+### IDEA Plugin
+
+IDEA Kotlin plugin for Kotlin 1.1-M04 with serialization in included:
+
+* Download [`plugin/kotlin-plugin-1.1-M04-serialization.zip`](#plugin/kotlin-plugin-1.1-M04-serialization.zip).
+* In IDEA go to Settings > Plugins > Install plugin from disk ... and select this file.
+
+### Command-line compiler plugin
+
+The command-line compiler plugin for Kotlin 1.1-M04 is available in the [`lib`](#lib) subdirectory.
 
 Use serialization plugin with kotlin compiler using the following command-line options:
 
@@ -11,7 +24,7 @@ kotlinc -Xplugin kotlin-serialization-compiler.jar \
         -cp kotlin-serialization-runtime.jar ...
 ```
 
-## Basic usage
+## Serialization overview
 
 Define serializable class with `@Serializable` annotation. For example:
 

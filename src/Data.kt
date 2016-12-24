@@ -90,7 +90,7 @@ fun testMethod(method: (KSerializer<Any>, Any) -> Result) {
         totalCount++
     }
     println("==============================================")
-    println("Done with ${(method as KFunction<*>).name}")
+    println("Done with ${method.name}")
     if (failCount > 0)
         println("!!! FAILED $failCount TEST CASES OUT OF $totalCount TEST CASES !!!")
     else

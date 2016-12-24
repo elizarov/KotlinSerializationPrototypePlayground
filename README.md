@@ -2,7 +2,7 @@
 
 Demo project for all the features implemented in the Kotlin serialization prototype.
 
-The compiled compiler plugin for kotlin build-1.1.0-dev-5380 is available in the `lib` subdirectory.
+The compiled compiler plugin for kotlin build-1.1-M04 is available in the `lib` subdirectory.
 
 Use serialization plugin with kotlin compiler using the following command-line options:
 

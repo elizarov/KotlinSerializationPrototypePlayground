@@ -8,14 +8,15 @@ You need to obtain compiler plugin to work with Kotlin serialization prototype.
 
 ### IDEA Plugin
 
-IDEA Kotlin plugin for Kotlin 1.1-M04 with serialization:
+IDEA Kotlin plugin for Kotlin 1.1.2 with serialization:
 
-* Download [`plugin/kotlin-plugin-1.1-M04-serialization.zip`](plugin/kotlin-plugin-1.1-M04-serialization.zip).
+* Make sure you have IntelliJ IDEA 2017.1 installed
+* Download [`plugin/kotlin-plugin-1.1.2-serialization.zip`](plugin/kotlin-plugin-1.1.2-serialization.zip).
 * In IDEA go to Settings > Plugins > Install plugin from disk ... and select this file.
 
 ### Command-line compiler plugin
 
-The command-line compiler plugin for Kotlin 1.1-M04 is available in the [`lib`](#lib) subdirectory.
+The command-line compiler plugin for Kotlin 1.1.2 is available in the [`lib`](#lib) subdirectory.
 
 Use serialization plugin with kotlin compiler using the following command-line options:
 

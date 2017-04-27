@@ -1,0 +1,23 @@
+plugins {
+    id "org.jetbrains.kotlin.jvm" version "1.1.2"
+}
+
+sourceSets {
+    main.kotlin.srcDirs += "src"
+    test.kotlin.srcDirs += "test"
+}
+
+repositories {
+    jcenter()
+}
+
+dependencies {
+    compile "org.jetbrains.kotlin:kotlin-stdlib-jre8"
+    compile "org.jetbrains.kotlin:kotlin-reflect"
+    compile files("lib/kotlin-serialization-runtime.jar")
+    testCompile "junit:junit:4.12"
+}
+
+compileKotlin {
+    kotlinOptions.freeCompilerArgs += ["-Xplugin", "lib/kotlin-serialization-gradle.jar"]
+}

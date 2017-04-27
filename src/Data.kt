@@ -1,5 +1,5 @@
 import kotlin.reflect.KFunction
-import kotlin.reflect.companionObjectInstance
+import kotlin.reflect.full.companionObjectInstance
 import kotlin.serialization.KSerializer
 import kotlin.serialization.Serializable
 
@@ -60,40 +60,45 @@ val testCases: List<Case<*>> = listOf(
 )
 
 @Suppress("UNCHECKED_CAST")
-fun <T: Any> testCase(serializer: KSerializer<T>, obj: T, method: (KSerializer<Any>, Any) -> Result): Boolean {
-    println("Start with $obj")
+fun <T: Any> testCase(serializer: KSerializer<T>, obj: T, method: (KSerializer<Any>, Any) -> Result, verbose: Boolean = true): Boolean {
+    if (verbose) println("Start with $obj")
     val result = try { method(serializer as KSerializer<Any>, obj) } catch (e: Throwable) {
         println("Failed with $e")
         return false
     }
-    println("Loaded obj ${result.res}")
-    println("    equals=${obj == result.res}, sameRef=${obj === result.res}")
-    println("Saved form ${result.ext}")
+    if (verbose) {
+        println("Loaded obj ${result.res}")
+        println("    equals=${obj == result.res}, sameRef=${obj === result.res}")
+        println("Saved form ${result.ext}")
+    }
     return obj == result.res
 }
 
-fun testCase(case: Case<Any>, method: (KSerializer<Any>, Any) -> Result): Boolean {
+fun testCase(case: Case<Any>, method: (KSerializer<Any>, Any) -> Result, verbose: Boolean = true): Boolean {
     println("Test case ${case.name}")
-    return testCase(case.serializer, case.obj, method)
+    return testCase(case.serializer, case.obj, method, verbose)
 }
 
 @Suppress("UNCHECKED_CAST")
-fun testMethod(method: (KSerializer<Any>, Any) -> Result) {
-    println("==============================================")
+fun testMethod(method: (KSerializer<Any>, Any) -> Result, verbose: Boolean = true): Pair<Int, Int> {
+    if (verbose) println("==============================================")
     println("Running with ${(method as KFunction<*>).name}")
     var totalCount = 0
     var failCount = 0
     testCases.forEach { case ->
-        println()
-        if (!testCase(case as Case<Any>, method))
+        if (verbose) println()
+        if (!testCase(case as Case<Any>, method, verbose))
             failCount++
         totalCount++
     }
-    println("==============================================")
-    println("Done with ${method.name}")
-    if (failCount > 0)
-        println("!!! FAILED $failCount TEST CASES OUT OF $totalCount TEST CASES !!!")
-    else
-        println("Passed $totalCount test cases")
+    if (verbose) {
+        println("==============================================")
+        println("Done with ${method.name}")
+        if (failCount > 0)
+            println("!!! FAILED $failCount TEST CASES OUT OF $totalCount TEST CASES !!!")
+        else
+            println("Passed $totalCount test cases")
+    }
+    return Pair(failCount, totalCount)
 }
 

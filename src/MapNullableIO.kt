@@ -45,5 +45,4 @@ fun main(args: Array<String>) {
 //    testCase(CountyData, CountyData("US", listOf(CityData(1, "New York"), CityData(2, "Chicago"))), ::testMapNullableIO)
 //    testCase(Zoo, zoo, ::testMapNullableIO)
     testMethod(::testMapNullableIO)
-
 }

@@ -1,9 +1,0 @@
-<component name="libraryTable">
-  <library name="kotlin-serialization-runtime">
-    <CLASSES>
-      <root url="jar://$PROJECT_DIR$/lib/kotlin-serialization-runtime.jar!/" />
-    </CLASSES>
-    <JAVADOC />
-    <SOURCES />
-  </library>
-</component>

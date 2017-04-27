@@ -2,7 +2,9 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/.idea/KotlinSerializationPrototypePlayground.iml" filepath="$PROJECT_DIR$/.idea/KotlinSerializationPrototypePlayground.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/KotlinSerializationPrototypePlayground.iml" filepath="$PROJECT_DIR$/.idea/modules/KotlinSerializationPrototypePlayground.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/KotlinSerializationPrototypePlayground_main.iml" filepath="$PROJECT_DIR$/.idea/modules/KotlinSerializationPrototypePlayground_main.iml" group="KotlinSerializationPrototypePlayground" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/KotlinSerializationPrototypePlayground_test.iml" filepath="$PROJECT_DIR$/.idea/modules/KotlinSerializationPrototypePlayground_test.iml" group="KotlinSerializationPrototypePlayground" />
     </modules>
   </component>
 </project>

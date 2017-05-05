@@ -28,12 +28,32 @@ kotlinc -Xplugin kotlin-serialization-compiler.jar \
 ### Gradle compiler plugin
 
 The plugin for building Gradle project with is is available in the [`lib`](#lib) subdirectory.
-See [`build.gradle`](build.gradle) as example on how to use it. You need the following configuration
-in your build file:
+See [`build.gradle`](build.gradle) as example on how to use it. You need to add the following compiler 
+configuration option to your build file:
 
 ```groovy
 compileKotlin {
     kotlinOptions.freeCompilerArgs += ["-Xplugin", "lib/kotlin-serialization-gradle.jar"]
+}
+```
+
+In addition to that, if you are configuring Kotlin in your Gradle project using "old style" 
+`apply plugin: 'kotlin'` line, 
+then you also need to add serialization plugin to classpath in `buildscript` section:
+
+```groovy
+buildscript {
+    dependencies {
+        classpath files("lib/kotlin-serialization-gradle.jar")
+    }
+}
+```
+
+However, you don't need `buildscript` classpath if Kotlin is configured with Gradle plugin DSL like this:
+
+```groovy
+plugins {
+    id "org.jetbrains.kotlin.jvm" version "1.1.2"
 }
 ```
 
